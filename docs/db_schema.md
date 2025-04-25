@@ -1,0 +1,73 @@
+# Database Schema
+
+## Tables
+
+### team_members
+Stores information about team members and their hierarchy.
+
+| Column     | Type                     | Description                          |
+|------------|--------------------------|--------------------------------------|
+| id         | UUID                     | Primary key, references auth.users   |
+| name       | TEXT                     | Full name of the team member        |
+| email      | TEXT                     | Email address (unique)              |
+| role       | TEXT                     | Role in the organization            |
+| manager_id | UUID                     | ID of the manager (self-reference)  |
+| created_at | TIMESTAMP WITH TIME ZONE | Record creation timestamp           |
+
+### objectives
+Tracks team member objectives and their status.
+
+| Column        | Type                     | Description                          |
+|---------------|--------------------------|--------------------------------------|
+| id            | UUID                     | Primary key                         |
+| team_member_id| UUID                     | References team_members.id          |
+| title         | TEXT                     | Objective title                     |
+| description   | TEXT                     | Detailed description                |
+| status        | TEXT                     | Current status (pending/completed)  |
+| due_date      | TIMESTAMP WITH TIME ZONE | Target completion date              |
+| created_at    | TIMESTAMP WITH TIME ZONE | Record creation timestamp           |
+
+### action_items
+Stores individual tasks within objectives.
+
+| Column      | Type                     | Description                          |
+|-------------|--------------------------|--------------------------------------|
+| id          | UUID                     | Primary key                         |
+| objective_id| UUID                     | References objectives.id            |
+| content     | TEXT                     | Task description                    |
+| status      | TEXT                     | Current status (pending/completed)  |
+| created_at  | TIMESTAMP WITH TIME ZONE | Record creation timestamp           |
+
+## Relationships
+
+- `team_members.manager_id` → `team_members.id` (self-reference)
+- `objectives.team_member_id` → `team_members.id`
+- `action_items.objective_id` → `objectives.id`
+
+## Row Level Security (RLS) Policies
+
+### team_members
+- Users can view their own record
+- Users can view records of team members they manage
+
+### objectives
+- Users can view their own objectives
+- Users can view objectives of team members they manage
+
+### action_items
+- Users can view action items for their objectives
+- Users can view action items for objectives they manage
+
+## Automatic User Creation
+
+When a new user signs up through Google OAuth:
+1. A record is automatically created in `auth.users`
+2. A trigger creates a corresponding record in `team_members`
+3. The user is assigned the default role of 'Developer'
+
+## Indexes
+
+- `team_members.email` (unique)
+- `team_members.manager_id`
+- `objectives.team_member_id`
+- `action_items.objective_id` 

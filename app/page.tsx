@@ -14,7 +14,14 @@ export default function Home() {
   useEffect(() => {
     if (!user) {
       router.push('/login');
+      return;
     }
+    console.log('Current user:', {
+      id: user.id,
+      email: user.email,
+      name: user.user_metadata?.full_name,
+      role: user.user_metadata?.role
+    });
   }, [user, router]);
 
   if (!user) {

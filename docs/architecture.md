@@ -86,3 +86,6 @@
    - Response compression
    - Query optimization
    - Connection pooling 
+
+4. **Things to later delete**
+   - Supabase PW: e*CS?qP#k3L&9Kq

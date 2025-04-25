@@ -23,6 +23,38 @@
           }
         }
       ]
+    },
+    {
+      "name": "documentation-check",
+      "description": "Check relevant documentation before making decisions",
+      "triggers": [
+        {
+          "type": "file-change",
+          "pattern": "**/*.{ts,tsx,js,jsx}",
+          "action": "check-docs"
+        }
+      ],
+      "suggestions": [
+        {
+          "type": "reminder",
+          "message": "Remember to check documentation:",
+          "description": "Review relevant documentation before proceeding",
+          "docs": [
+            {
+              "file": "docs/architecture.md",
+              "description": "Architecture overview and tech stack"
+            },
+            {
+              "file": "docs/db_schema.md",
+              "description": "Database schema and relationships"
+            },
+            {
+              "file": "docs/product_flows.md",
+              "description": "Product flows and user journeys"
+            }
+          ]
+        }
+      ]
     }
   ]
 } 

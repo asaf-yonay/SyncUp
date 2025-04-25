@@ -3,69 +3,47 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
-import { mockTeamMembers, verifyCredentials, getTeamMemberByEmail } from '../lib/mockData';
 
-// For development/testing, use mock values if env vars are not set
-const isDevelopment = !process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-// Create a mock implementation for development
-const mockSupabase = {
-  auth: {
-    getSession: async () => ({ data: { session: { user: null } }, error: null }),
-    onAuthStateChange: (callback: (event: string, session: any) => void) => {
-      return { data: { subscription: { unsubscribe: () => {} } } };
-    },
-    signInWithPassword: async ({ email, password }: { email: string; password: string }) => {
-      if (verifyCredentials(email, password)) {
-        const user = getTeamMemberByEmail(email);
-        return { data: { user }, error: null };
-      }
-      return { data: { user: null }, error: { message: 'Invalid credentials' } };
-    },
-    signOut: async () => ({ error: null }),
-    signUp: async ({ email, password, options }: { email: string; password: string; options: any }) => {
-      const user = {
-        id: String(mockTeamMembers.length + 1),
-        email,
-        name: options?.data?.name || 'New User',
-        role: options?.data?.role || 'Developer'
-      };
-      return { data: { user }, error: null };
-    }
-  },
-  from: () => ({
-    insert: async () => ({ error: null })
-  })
-};
-
-// Create the Supabase client only in production
-let supabase: typeof mockSupabase | SupabaseClient;
-if (!isDevelopment) {
-  try {
-    supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
+// Create the Supabase client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      storage: {
+        getItem: (key) => {
+          try {
+            return localStorage.getItem(key);
+          } catch (error) {
+            return null;
+          }
+        },
+        setItem: (key, value) => {
+          try {
+            localStorage.setItem(key, value);
+          } catch (error) {
+            console.error('Error setting auth storage:', error);
+          }
+        },
+        removeItem: (key) => {
+          try {
+            localStorage.removeItem(key);
+          } catch (error) {
+            console.error('Error removing auth storage:', error);
+          }
         }
       }
-    );
-  } catch (error) {
-    console.error('Failed to create Supabase client:', error);
-    // Fall back to mock implementation if Supabase client creation fails
-    supabase = mockSupabase;
+    }
   }
-} else {
-  supabase = mockSupabase;
-}
+);
 
 interface AuthContextType {
   user: any;
-  signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
-  signUp: (email: string, password: string, name: string, role: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -77,17 +55,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session);
       if (session?.user) {
         setUser(session.user);
+        // Get the pre-auth URL and redirect there
+        const preAuthUrl = localStorage.getItem('preAuthUrl');
+        if (preAuthUrl && preAuthUrl !== '/login') {
+          localStorage.removeItem('preAuthUrl');
+          router.push(preAuthUrl);
+        } else {
+          router.push('/');
+        }
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session);
       if (session?.user) {
         setUser(session.user);
+        // Get the pre-auth URL and redirect there
+        const preAuthUrl = localStorage.getItem('preAuthUrl');
+        if (preAuthUrl && preAuthUrl !== '/login') {
+          localStorage.removeItem('preAuthUrl');
+          router.push(preAuthUrl);
+        } else {
+          router.push('/');
+        }
       } else {
         setUser(null);
-        router.push('/login');
+        // Only redirect to login if we're not already there
+        if (window.location.pathname !== '/login') {
+          router.push('/login');
+        }
       }
     });
 
@@ -96,12 +95,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [router]);
 
-  const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    if (data.user) {
-      setUser(data.user);
-      router.push('/');
+  const signInWithGoogle = async () => {
+    try {
+      console.log('Initiating Google OAuth...');
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent'
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Google sign-in error:', error);
+        throw error;
+      }
+
+      if (data?.url) {
+        console.log('Redirecting to:', data.url);
+        // Store the current URL to redirect back after auth
+        localStorage.setItem('preAuthUrl', window.location.pathname);
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error('Unexpected error during Google sign-in:', err);
+      throw err;
     }
   };
 
@@ -112,34 +133,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/login');
   };
 
-  const signUp = async (email: string, password: string, name: string, role: string) => {
-    const { error: signUpError, data } = await supabase.auth.signUp({ 
-      email, 
-      password,
-      options: {
-        data: {
-          name,
-          role
-        }
-      }
-    });
-    if (signUpError) throw signUpError;
-
-    if (data.user) {
-      await supabase.from('team_members').insert({
-        id: data.user.id,
-        name,
-        email,
-        role,
-        managerId: null
-      });
-      setUser(data.user);
-      router.push('/');
-    }
-  };
-
   return (
-    <AuthContext.Provider value={{ user, signIn, signOut, signUp }}>
+    <AuthContext.Provider value={{ user, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   );
