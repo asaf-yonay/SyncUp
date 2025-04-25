@@ -39,6 +39,7 @@ export default function Home() {
 
       <VoiceNavigation 
         teamMembers={mockTeamMembers.map(member => ({ id: member.id, name: member.name }))} 
+        currentMember={user}
         onAddActionItem={(memberId, content) => {
           // Handle adding action item
           console.log('Adding action item:', { memberId, content });

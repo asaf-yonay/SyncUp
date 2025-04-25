@@ -144,6 +144,7 @@ export default function MemberPage() {
 
       <VoiceNavigation 
         teamMembers={[]} 
+        currentMember={member}
         onAddActionItem={(memberId, content) => {
           // Handle adding action item
           console.log('Adding action item:', { memberId, content });
