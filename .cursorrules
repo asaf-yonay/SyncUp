@@ -1,0 +1,28 @@
+{
+  "rules": [
+    {
+      "name": "development-cycle-commit",
+      "description": "Commit changes after completing a development cycle",
+      "triggers": [
+        {
+          "type": "file-change",
+          "pattern": "**/*.{ts,tsx,js,jsx,css,scss,json}",
+          "action": "suggest-commit"
+        }
+      ],
+      "suggestions": [
+        {
+          "type": "commit",
+          "message": "feat: complete development cycle - ${feature}",
+          "description": "Commit changes after completing a development cycle",
+          "variables": {
+            "feature": {
+              "type": "prompt",
+              "question": "What feature or task did you complete in this cycle?"
+            }
+          }
+        }
+      ]
+    }
+  ]
+} 
