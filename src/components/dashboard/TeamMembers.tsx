@@ -1,12 +1,19 @@
 'use client';
 
 import { TeamMember } from '@/lib/types';
+import { useRouter } from 'next/navigation';
 
 interface TeamMembersProps {
   members: TeamMember[];
 }
 
 export function TeamMembers({ members }: TeamMembersProps) {
+  const router = useRouter();
+
+  const handleMemberClick = (memberId: string) => {
+    router.push(`/members/${memberId}`);
+  };
+
   return (
     <div style={{ 
       backgroundColor: 'var(--color-white)',
@@ -48,8 +55,10 @@ export function TeamMembers({ members }: TeamMembersProps) {
               border: '1px solid var(--color-gray-200)',
               borderRadius: 'var(--radius-md)',
               backgroundColor: 'var(--color-white)',
-              transition: 'transform 0.2s, box-shadow 0.2s'
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              cursor: 'pointer'
             }}
+            onClick={() => handleMemberClick(member.id)}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
               e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
