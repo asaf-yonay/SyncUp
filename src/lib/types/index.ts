@@ -24,9 +24,10 @@ export interface ActionItem {
   id: string;
   title: string;
   description: string;
-  dueDate: string;
+  due_date: string;
   priority: 'low' | 'medium' | 'high';
-  memberId: string;
+  member_id: string;
+  objective_id?: string;
   status: 'pending' | 'in-progress' | 'completed';
   created_at: string;
   updated_at: string;

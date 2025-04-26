@@ -10,7 +10,7 @@ interface ActionItemFormProps {
 export function ActionItemForm({ memberId, onClose }: ActionItemFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [dueDate, setDueDate] = useState('');
+  const [due_date, setDueDate] = useState('');
   const [priority, setPriority] = useState('medium');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,9 +29,9 @@ export function ActionItemForm({ memberId, onClose }: ActionItemFormProps) {
         body: JSON.stringify({
           title,
           description,
-          dueDate,
+          due_date,
           priority,
-          memberId,
+          member_id: memberId,
         }),
       });
 
@@ -170,7 +170,7 @@ export function ActionItemForm({ memberId, onClose }: ActionItemFormProps) {
             </label>
             <input
               type="date"
-              value={dueDate}
+              value={due_date}
               onChange={(e) => setDueDate(e.target.value)}
               required
               style={{
