@@ -55,6 +55,97 @@
           ]
         }
       ]
+    },
+    {
+      "name": "design-system-first",
+      "description": "Always use design system variables before considering other styling approaches",
+      "triggers": [
+        {
+          "type": "file-change",
+          "pattern": "**/*.{ts,tsx,js,jsx,css,scss}",
+          "action": "check-design-system"
+        }
+      ],
+      "suggestions": [
+        {
+          "type": "reminder",
+          "message": "Remember to use design system variables:",
+          "description": "Check if the styling can be achieved using our design system variables",
+          "docs": [
+            {
+              "file": "src/styles/variables.css",
+              "description": "Design system variables reference"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "no-tailwind",
+      "description": "Prevent using Tailwind CSS classes",
+      "triggers": [
+        {
+          "type": "file-change",
+          "pattern": "**/*.{ts,tsx,js,jsx}",
+          "action": "check-tailwind"
+        }
+      ],
+      "suggestions": [
+        {
+          "type": "warning",
+          "message": "Avoid using Tailwind CSS classes. Instead, use our design system variables and utility classes from globals.css",
+          "description": "Reminder to use our custom design system instead of Tailwind"
+        }
+      ]
+    },
+    {
+      "name": "css-variables-consistency",
+      "description": "Ensure consistent use of CSS variables across the application",
+      "triggers": [
+        {
+          "type": "file-change",
+          "pattern": "**/*.{css,scss}",
+          "action": "check-variables"
+        }
+      ],
+      "suggestions": [
+        {
+          "type": "reminder",
+          "message": "Remember to use CSS variables for:",
+          "description": "Check if the following are using variables: colors, spacing, typography, shadows, border radius",
+          "categories": [
+            "colors",
+            "spacing",
+            "typography",
+            "shadows",
+            "border-radius"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "component-styling-approach",
+      "description": "Ensure consistent component styling approach",
+      "triggers": [
+        {
+          "type": "file-change",
+          "pattern": "**/*.{ts,tsx,js,jsx}",
+          "action": "check-styling"
+        }
+      ],
+      "suggestions": [
+        {
+          "type": "reminder",
+          "message": "Component styling guidelines:",
+          "description": "Follow these steps for component styling:",
+          "steps": [
+            "1. Use CSS variables from design system",
+            "2. Use utility classes from globals.css when possible",
+            "3. Create component-specific CSS modules only when necessary",
+            "4. Avoid inline styles"
+          ]
+        }
+      ]
     }
   ]
 } 
