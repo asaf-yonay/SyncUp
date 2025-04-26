@@ -11,20 +11,25 @@ export interface TeamMember {
 
 export interface Objective {
   id: string;
-  team_member_id: string;
   title: string;
   description: string;
-  status: Status;
-  due_date: string;
+  startDate: string;
+  endDate: string;
+  status: 'not-started' | 'in-progress' | 'completed';
   created_at: string;
+  updated_at: string;
 }
 
 export interface ActionItem {
   id: string;
-  objective_id: string;
-  content: string;
-  status: Status;
+  title: string;
+  description: string;
+  dueDate: string;
+  priority: 'low' | 'medium' | 'high';
+  memberId: string;
+  status: 'pending' | 'in-progress' | 'completed';
   created_at: string;
+  updated_at: string;
 }
 
 export interface Database {

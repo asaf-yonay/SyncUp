@@ -1,6 +1,7 @@
 'use client';
 
 import { MemberDetails } from '@/components/members/MemberDetails'
+import { AddActionItemButton } from '@/components/members/AddActionItemButton'
 import { useRouter } from 'next/navigation'
 
 export default function MemberPage({ params }: { params: { id: string } }) {
@@ -15,34 +16,41 @@ export default function MemberPage({ params }: { params: { id: string } }) {
       <div style={{ 
         display: 'flex',
         alignItems: 'center',
-        gap: 'var(--spacing-4)',
+        justifyContent: 'space-between',
         marginBottom: 'var(--spacing-6)'
       }}>
-        <button
-          onClick={() => router.back()}
-          style={{ 
-            padding: 'var(--spacing-2) var(--spacing-4)',
-            backgroundColor: 'var(--color-gray-100)',
-            color: 'var(--color-gray-700)',
-            borderRadius: 'var(--radius-md)',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: 'var(--font-size-sm)',
-            fontWeight: 'var(--font-weight-medium)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--spacing-2)'
-          }}
-        >
-          ← Back
-        </button>
-        <h1 style={{ 
-          fontSize: 'var(--font-size-2xl)',
-          fontWeight: 'var(--font-weight-bold)',
-          color: 'var(--color-gray-900)'
+        <div style={{ 
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--spacing-4)'
         }}>
-          Member Details
-        </h1>
+          <button
+            onClick={() => router.back()}
+            style={{ 
+              padding: 'var(--spacing-2) var(--spacing-4)',
+              backgroundColor: 'var(--color-gray-100)',
+              color: 'var(--color-gray-700)',
+              borderRadius: 'var(--radius-md)',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 'var(--font-size-sm)',
+              fontWeight: 'var(--font-weight-medium)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spacing-2)'
+            }}
+          >
+            ← Back
+          </button>
+          <h1 style={{ 
+            fontSize: 'var(--font-size-2xl)',
+            fontWeight: 'var(--font-weight-bold)',
+            color: 'var(--color-gray-900)'
+          }}>
+            Member Details
+          </h1>
+        </div>
+        <AddActionItemButton memberId={params.id} />
       </div>
 
       <MemberDetails memberId={params.id} />
