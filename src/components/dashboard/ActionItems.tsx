@@ -1,6 +1,6 @@
 'use client';
 
-import { ActionItem } from '@/types';
+import { ActionItem } from '@/lib/types';
 
 interface ActionItemsProps {
   items: ActionItem[];
@@ -37,20 +37,27 @@ export function ActionItems({ items }: ActionItemsProps) {
         gap: 'var(--spacing-4)'
       }}>
         {items.map((item) => (
-          <div key={item.id} style={{ 
-            padding: 'var(--spacing-4)',
-            border: '1px solid var(--color-gray-200)',
-            borderRadius: 'var(--radius-md)',
-            backgroundColor: 'var(--color-white)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            ':hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: 'var(--shadow-lg)'
-            }
-          }}>
+          <div 
+            key={item.id} 
+            style={{ 
+              padding: 'var(--spacing-4)',
+              border: '1px solid var(--color-gray-200)',
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: 'var(--color-white)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              transition: 'transform 0.2s, box-shadow 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
             <div>
               <h3 style={{ 
                 fontSize: 'var(--font-size-lg)',
@@ -58,14 +65,8 @@ export function ActionItems({ items }: ActionItemsProps) {
                 marginBottom: 'var(--spacing-2)',
                 color: 'var(--color-gray-900)'
               }}>
-                {item.title}
+                {item.content}
               </h3>
-              <p style={{ 
-                color: 'var(--color-gray-600)',
-                marginBottom: 'var(--spacing-2)'
-              }}>
-                {item.description}
-              </p>
               <p style={{ 
                 color: 'var(--color-gray-500)',
                 fontSize: 'var(--font-size-sm)',
@@ -80,7 +81,7 @@ export function ActionItems({ items }: ActionItemsProps) {
                   borderRadius: '50%',
                   backgroundColor: item.status === 'completed' ? 'var(--color-green-500)' : 'var(--color-yellow-500)'
                 }} />
-                Due: {formatDate(item.due_date)}
+                Created: {formatDate(item.created_at)}
               </p>
             </div>
             <div style={{ 

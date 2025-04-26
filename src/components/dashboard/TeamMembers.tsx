@@ -1,6 +1,6 @@
 'use client';
 
-import { TeamMember } from '@/types';
+import { TeamMember } from '@/lib/types';
 
 interface TeamMembersProps {
   members: TeamMember[];
@@ -110,7 +110,7 @@ export function TeamMembers({ members }: TeamMembersProps) {
                 borderRadius: '50%',
                 backgroundColor: 'var(--color-blue-500)'
               }} />
-              {member.department}
+              {member.email}
             </div>
           </div>
         ))}

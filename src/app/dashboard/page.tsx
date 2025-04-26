@@ -3,60 +3,39 @@
 import { useAuth } from '@/hooks/useAuth';
 import { TeamMembers } from '@/components/dashboard/TeamMembers';
 import { ActionItems } from '@/components/dashboard/ActionItems';
-import { ActionItem, TeamMember } from '@/types';
+import { useData } from '@/components/providers/DataProvider';
 import '@/styles/variables.css';
-
-// Temporary mock data - will be replaced with real data from Supabase
-const mockTeamMembers: TeamMember[] = [
-  {
-    id: '1',
-    name: 'John Doe',
-    email: 'john@example.com',
-    role: 'Senior Developer',
-    managerId: null,
-    department: 'Engineering',
-    objectives: [],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '2',
-    name: 'Jane Smith',
-    email: 'jane@example.com',
-    role: 'Product Manager',
-    managerId: '1',
-    department: 'Product',
-    objectives: [],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
-
-const mockActionItems: ActionItem[] = [
-  {
-    id: '1',
-    title: 'Complete project documentation',
-    description: 'Update all API documentation and user guides',
-    status: 'pending' as const,
-    due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    objective_id: '1',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '2',
-    title: 'Review pull requests',
-    description: 'Review and merge pending pull requests',
-    status: 'completed' as const,
-    due_date: new Date().toISOString(),
-    objective_id: '2',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { teamMembers, actionItems, isLoading, error } = useData();
+
+  if (isLoading) {
+    return (
+      <div style={{ 
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ 
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--color-red-600)'
+      }}>
+        <p>Error: {error.message}</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ 
@@ -85,8 +64,8 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <TeamMembers members={mockTeamMembers} />
-      <ActionItems items={mockActionItems} />
+      <TeamMembers members={teamMembers} />
+      <ActionItems items={actionItems} />
     </div>
   );
 } 

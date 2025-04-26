@@ -1,3 +1,4 @@
+export type { TeamMember, Objective, ActionItem } from '@/lib/types';
 export type Status = 'pending' | 'in-progress' | 'completed';
 
 export interface TeamMember {

@@ -1,24 +1,30 @@
+import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/hooks/useAuth';
+import { DataProvider } from '@/components/providers/DataProvider';
 import './globals.css';
-import '@/styles/variables.css'
+import '@/styles/variables.css';
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
   title: 'SyncUp',
-  description: 'Team collaboration platform',
-}
+  description: 'Team collaboration and task management',
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className={inter.className}>
         <AuthProvider>
-          {children}
+          <DataProvider>
+            {children}
+          </DataProvider>
         </AuthProvider>
       </body>
     </html>
-  )
+  );
 }
