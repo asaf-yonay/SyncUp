@@ -1,9 +1,78 @@
-# Architecture Overview
+# Project Architecture
+
+## Core Principles
+
+1. **Page Organization**
+   - All page components must be in `/src/pages`
+   - Pages are pure React components that compose layouts and components
+   - No business logic in pages, only composition and routing
+
+2. **Routing**
+   - All routes are defined in a single location: `/src/app/routes.tsx`
+   - Next.js app directory structure is used for routing
+   - Route files only import and render pages
+
+3. **Components**
+   - All UI components must be in `/src/components`
+   - Components are organized by feature/domain
+   - Reusable components go in `/src/components/ui`
+   - Feature-specific components go in their respective feature folders
+
+4. **Data Layer**
+   - Supabase is our single source of truth for data
+   - Authentication is handled through Supabase Auth
+   - OAuth providers (Google) are configured through Supabase
+
+5. **Development Process**
+   - Plan before implementation
+   - Get approval before making changes
+   - Document decisions and changes
+
+6. **Styling**
+   - CSS variables are used for theming and styling
+   - No Tailwind CSS
+   - Styles are defined in `/src/styles`
+   - Component-specific styles are co-located with components
+
+## Directory Structure
+
+```
+src/
+  ├── components/         # All UI components
+  │   ├── ui/            # Reusable UI components
+  │   ├── auth/          # Authentication components
+  │   ├── dashboard/     # Dashboard components
+  │   └── shared/        # Shared components
+  ├── pages/             # All page components
+  ├── styles/            # Global styles and variables
+  ├── lib/               # Utilities and configurations
+  │   └── supabase.ts    # Supabase client
+  └── app/               # Next.js routing
+      └── routes.tsx     # Single routing configuration
+```
+
+## Development Workflow
+
+1. **Planning Phase**
+   - Discuss requirements and approach
+   - Get approval before implementation
+   - Document the plan
+
+2. **Implementation Phase**
+   - Follow the architecture rules
+   - Create/update components in the correct locations
+   - Use CSS variables for styling
+   - Implement Supabase integration
+
+3. **Review Phase**
+   - Verify architecture compliance
+   - Test functionality
+   - Document any deviations or new patterns
 
 ## Tech Stack
 
 - **Frontend**: Next.js with TypeScript
-- **Styling**: Tailwind CSS
+- **Styling**: CSS Variables
 - **Authentication**: Supabase Auth
 - **Database**: Supabase PostgreSQL
 - **Email**: Nodemailer
