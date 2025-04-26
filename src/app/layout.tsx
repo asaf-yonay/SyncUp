@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/hooks/useAuth';
 import { DataProvider } from '@/components/providers/DataProvider';
+import { PersistentVoiceNavigation } from '@/components/shared/PersistentVoiceNavigation';
 import './globals.css';
 import '@/styles/variables.css';
 
@@ -22,6 +23,7 @@ export default function RootLayout({
         <AuthProvider>
           <DataProvider>
             {children}
+            <PersistentVoiceNavigation />
           </DataProvider>
         </AuthProvider>
       </body>

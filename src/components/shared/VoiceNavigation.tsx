@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 // Add type definitions for Speech Recognition API
@@ -60,17 +60,34 @@ interface VoiceNavigationProps {
     name: string;
   };
   onAddActionItem?: (memberId: string, content: string) => void;
+  onTranscriptChange?: (transcript: string) => void;
+  isListening?: boolean;
 }
 
 export default function VoiceNavigation({ 
   teamMembers, 
   currentMember,
-  onAddActionItem 
+  onAddActionItem,
+  onTranscriptChange,
+  isListening: controlledIsListening 
 }: VoiceNavigationProps) {
-  const [isListening, setIsListening] = useState(false);
+  const [internalIsListening, setInternalIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  // Use controlled isListening if provided, otherwise use internal state
+  const isListening = controlledIsListening ?? internalIsListening;
+
+  useEffect(() => {
+    if (controlledIsListening !== undefined) {
+      if (controlledIsListening) {
+        handleStartListening();
+      } else {
+        handleStopListening();
+      }
+    }
+  }, [controlledIsListening]);
 
   const handleStartListening = async () => {
     try {
@@ -88,6 +105,15 @@ export default function VoiceNavigation({
     }
   };
 
+  const handleStopListening = () => {
+    if (recognition.current) {
+      recognition.current.stop();
+    }
+  };
+
+  // Store recognition instance in ref to access it across renders
+  const recognition = useRef<SpeechRecognition | null>(null);
+
   const initializeRecognition = async () => {
     try {
       // Check if the browser supports speech recognition
@@ -98,39 +124,40 @@ export default function VoiceNavigation({
 
       // Create speech recognition instance
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
+      recognition.current = new SpeechRecognition();
 
       // Configure recognition settings
-      recognition.continuous = false; // Changed to false to prevent continuous listening issues
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
+      recognition.current.continuous = false;
+      recognition.current.interimResults = false;
+      recognition.current.lang = 'en-US';
 
-      recognition.onstart = () => {
-        setIsListening(true);
+      recognition.current.onstart = () => {
+        setInternalIsListening(true);
         setError(null);
       };
 
-      recognition.onend = () => {
-        setIsListening(false);
+      recognition.current.onend = () => {
+        setInternalIsListening(false);
       };
 
-      recognition.onerror = (event: SpeechRecognitionEvent) => {
+      recognition.current.onerror = (event: SpeechRecognitionEvent) => {
         console.error('Speech recognition error:', event.error);
         setError(`Error: ${event.error}`);
-        setIsListening(false);
+        setInternalIsListening(false);
       };
 
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        const transcript = Array.from(event.results)
+      recognition.current.onresult = (event: SpeechRecognitionEvent) => {
+        const newTranscript = Array.from(event.results)
           .map((result) => result[0])
           .map((result) => result.transcript)
           .join('');
         
-        setTranscript(transcript);
-        processVoiceCommand(transcript.toLowerCase());
+        setTranscript(newTranscript);
+        onTranscriptChange?.(newTranscript);
+        processVoiceCommand(newTranscript.toLowerCase());
       };
 
-      return recognition;
+      return recognition.current;
     } catch (err) {
       console.error('Error initializing speech recognition:', err);
       setError('Failed to initialize speech recognition');
@@ -160,7 +187,7 @@ export default function VoiceNavigation({
         // Find the best matching team member
         const bestMatch = findBestNameMatch(nameToFind, teamMembers);
         if (bestMatch) {
-          router.push(`/member/${bestMatch.id}`);
+          router.push(`/members/${bestMatch.id}`);
           return;
         }
       }
@@ -246,49 +273,12 @@ export default function VoiceNavigation({
   };
 
   useEffect(() => {
-    let recognition: SpeechRecognition | null = null;
-
     return () => {
-      if (recognition) {
-        recognition.stop();
+      if (recognition.current) {
+        recognition.current.stop();
       }
     };
-  }, [teamMembers, router, onAddActionItem]);
+  }, []);
 
-  return (
-    <div className="fixed bottom-4 right-4">
-      <button
-        onClick={() => isListening ? setIsListening(false) : handleStartListening()}
-        className={`p-4 rounded-full shadow-lg ${
-          isListening ? 'bg-red-500' : 'bg-blue-500'
-        } text-white`}
-        title={isListening ? 'Stop listening' : 'Start listening'}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-          />
-        </svg>
-      </button>
-      {transcript && (
-        <div className="mt-2 p-2 bg-gray-100 rounded text-sm">
-          {transcript}
-        </div>
-      )}
-      {error && (
-        <div className="mt-2 p-2 bg-red-100 text-red-700 rounded text-sm">
-          {error}
-        </div>
-      )}
-    </div>
-  );
+  return null; // Component is now headless, UI handled by parent
 } 
