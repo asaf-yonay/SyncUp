@@ -14,6 +14,10 @@ export class ActionItemRepository extends BaseRepository<'action_items'> {
     return this.executeQuery<ActionItem>(this.client.select('*').eq('id', id).single());
   }
 
+  async findByMemberId(memberId: string): Promise<ActionItem[]> {
+    return this.executeQuery<ActionItem[]>(this.client.select('*').eq('member_id', memberId));
+  }
+
   async findByObjectiveId(objectiveId: string): Promise<ActionItem[]> {
     return this.executeQuery<ActionItem[]>(this.client.select('*').eq('objective_id', objectiveId));
   }

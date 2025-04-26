@@ -28,21 +28,27 @@ Tracks team member objectives and their status.
 | created_at    | TIMESTAMP WITH TIME ZONE | Record creation timestamp           |
 
 ### action_items
-Stores individual tasks within objectives.
+Stores individual tasks that can be either standalone or linked to objectives.
 
-| Column      | Type                     | Description                          |
-|-------------|--------------------------|--------------------------------------|
-| id          | UUID                     | Primary key                         |
-| objective_id| UUID                     | References objectives.id            |
-| content     | TEXT                     | Task description                    |
-| status      | TEXT                     | Current status (pending/completed)  |
-| created_at  | TIMESTAMP WITH TIME ZONE | Record creation timestamp           |
+| Column        | Type                     | Description                          |
+|---------------|--------------------------|--------------------------------------|
+| id            | UUID                     | Primary key                         |
+| title         | TEXT                     | Task title                          |
+| description   | TEXT                     | Task description                    |
+| due_date      | TIMESTAMP WITH TIME ZONE | Target completion date              |
+| priority      | TEXT                     | Priority level (low/medium/high)    |
+| status        | TEXT                     | Current status (pending/in-progress/completed) |
+| member_id     | UUID                     | References team_members.id          |
+| objective_id  | UUID                     | Optional reference to objectives.id |
+| created_at    | TIMESTAMP WITH TIME ZONE | Record creation timestamp           |
+| updated_at    | TIMESTAMP WITH TIME ZONE | Last update timestamp               |
 
 ## Relationships
 
 - `team_members.manager_id` → `team_members.id` (self-reference)
 - `objectives.team_member_id` → `team_members.id`
-- `action_items.objective_id` → `objectives.id`
+- `action_items.objective_id` → `objectives.id` (optional)
+- `action_items.member_id` → `team_members.id`
 
 ## Row Level Security (RLS) Policies
 
@@ -55,8 +61,11 @@ Stores individual tasks within objectives.
 - Users can view objectives of team members they manage
 
 ### action_items
-- Users can view action items for their objectives
-- Users can view action items for objectives they manage
+- Users can view their own action items
+- Users can view action items linked to their objectives
+- Users can view action items of team members they manage
+- Users can create/update/delete their own action items
+- Managers can create/update/delete action items for their team members
 
 ## Automatic User Creation
 
@@ -70,4 +79,6 @@ When a new user signs up through Google OAuth:
 - `team_members.email` (unique)
 - `team_members.manager_id`
 - `objectives.team_member_id`
-- `action_items.objective_id` 
+- `action_items.objective_id`
+- `action_items.member_id`
+- `action_items.due_date` 

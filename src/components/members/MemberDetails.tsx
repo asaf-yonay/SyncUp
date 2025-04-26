@@ -1,7 +1,10 @@
 'use client';
 
-import { TeamMember } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { TeamMember, ActionItem } from '@/lib/types';
 import { useData } from '@/components/providers/DataProvider';
+import { actionItemRepository } from '@/lib/data';
+import { ActionItems } from '@/components/dashboard/ActionItems';
 
 interface MemberDetailsProps {
   memberId: string;
@@ -9,7 +12,21 @@ interface MemberDetailsProps {
 
 export function MemberDetails({ memberId }: MemberDetailsProps) {
   const { teamMembers, isLoading, error } = useData();
-  
+  const [actionItems, setActionItems] = useState<ActionItem[]>([]);
+
+  useEffect(() => {
+    async function loadActionItems() {
+      try {
+        const items = await actionItemRepository.findByMemberId(memberId);
+        setActionItems(items);
+      } catch (err) {
+        console.error('Error loading action items:', err instanceof Error ? err.message : 'Failed to load action items');
+      }
+    }
+
+    loadActionItems();
+  }, [memberId]);
+
   if (isLoading) {
     return (
       <div style={{ 
@@ -152,6 +169,10 @@ export function MemberDetails({ memberId }: MemberDetailsProps) {
             {member.manager_id ? 'Has Manager' : 'No Manager'}
           </p>
         </div>
+      </div>
+
+      <div style={{ marginTop: 'var(--spacing-6)' }}>
+        <ActionItems items={actionItems} />
       </div>
     </div>
   );
