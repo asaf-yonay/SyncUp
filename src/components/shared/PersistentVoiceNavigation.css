@@ -1,0 +1,169 @@
+.voice-nav-container {
+  position: fixed;
+  bottom: var(--voice-nav-position-bottom);
+  right: var(--voice-nav-position-right);
+  z-index: var(--voice-nav-z-index);
+  background-color: var(--voice-nav-background);
+  border-radius: var(--voice-nav-border-radius);
+  box-shadow: var(--voice-nav-shadow);
+  overflow: hidden;
+  transition: var(--voice-nav-transition);
+  width: var(--voice-nav-size-collapsed);
+  height: var(--voice-nav-size-collapsed);
+}
+
+.voice-nav-container.expanded {
+  width: var(--voice-nav-size-expanded-width);
+  height: var(--voice-nav-size-expanded-height);
+}
+
+.voice-nav-button {
+  width: 100%;
+  height: var(--voice-nav-button-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--voice-nav-button-background);
+  border: none;
+  cursor: pointer;
+  transition: var(--voice-nav-transition);
+}
+
+.voice-nav-button:hover {
+  background-color: var(--voice-nav-button-hover);
+}
+
+.voice-nav-button.active {
+  background-color: var(--voice-nav-button-active);
+}
+
+.voice-nav-icon {
+  width: var(--voice-nav-icon-size);
+  height: var(--voice-nav-icon-size);
+  color: var(--voice-nav-icon-color);
+  transition: var(--voice-nav-transition);
+}
+
+.voice-nav-icon.active {
+  color: var(--voice-nav-icon-active);
+}
+
+.voice-nav-content {
+  padding: var(--voice-nav-padding);
+}
+
+.voice-nav-error {
+  margin-bottom: var(--spacing-4);
+  padding: var(--spacing-2);
+  background-color: var(--voice-nav-error-background);
+  color: var(--voice-nav-error-text);
+  border-radius: var(--radius-md);
+}
+
+.voice-nav-transcript {
+  color: var(--voice-nav-text-color);
+  font-size: var(--voice-nav-text-size);
+  margin-top: var(--spacing-2);
+}
+
+.voice-nav-loading {
+  position: fixed;
+  bottom: var(--voice-nav-position-bottom);
+  right: var(--voice-nav-position-right);
+  z-index: var(--voice-nav-z-index);
+  padding: var(--voice-nav-padding);
+  background-color: var(--voice-nav-background);
+  border-radius: var(--voice-nav-border-radius);
+  box-shadow: var(--voice-nav-shadow);
+}
+
+.persistent-voice-navigation {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 50;
+}
+
+.voice-button {
+  background: var(--primary-color);
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.voice-button:hover {
+  transform: scale(1.1);
+}
+
+.voice-button.expanded {
+  background: var(--secondary-color);
+}
+
+.voice-navigation-container {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  background: var(--background-color);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: var(--shadow-md);
+  width: 300px;
+}
+
+.voice-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.manual-input textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  resize: vertical;
+  background: var(--surface-color);
+  color: var(--text-color);
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+}
+
+.controls button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.controls button:first-child {
+  background: var(--primary-color);
+  color: white;
+}
+
+.controls button:first-child.listening {
+  background: var(--error-color);
+}
+
+.controls button:last-child {
+  background: var(--secondary-color);
+  color: white;
+}
+
+.error-message {
+  color: var(--error-color);
+  margin-bottom: 12px;
+  padding: 8px;
+  border: 1px solid var(--error-color);
+  border-radius: 4px;
+  background: var(--error-bg-color);
+} 

@@ -1,5 +1,9 @@
-import { useEffect, useState, useRef } from 'react';
+'use client';
+
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSpeechRecognition } from 'react-speech-recognition';
+import { ActionItemData } from '@/types/action-items';
 
 // Add type definitions for Speech Recognition API
 interface SpeechRecognitionEvent extends Event {
@@ -59,9 +63,12 @@ interface VoiceNavigationProps {
     id: string;
     name: string;
   };
-  onAddActionItem?: (memberId: string, content: string) => void;
+  onAddActionItem?: (memberId: string, data: ActionItemData) => void;
   onTranscriptChange?: (transcript: string) => void;
+  onActionItemCreated?: () => void;
   isListening?: boolean;
+  'data-voice-navigation'?: boolean;
+  onCommand: (command: string) => void;
 }
 
 export default function VoiceNavigation({ 
@@ -69,113 +76,199 @@ export default function VoiceNavigation({
   currentMember,
   onAddActionItem,
   onTranscriptChange,
-  isListening: controlledIsListening 
+  onActionItemCreated,
+  isListening: controlledIsListening,
+  'data-voice-navigation': dataVoiceNavigation,
+  onCommand
 }: VoiceNavigationProps) {
-  const [internalIsListening, setInternalIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const [isBrowser, setIsBrowser] = useState(false);
+  const [manualInput, setManualInput] = useState('');
+  const [isListening, setIsListening] = useState(false);
 
-  // Use controlled isListening if provided, otherwise use internal state
-  const isListening = controlledIsListening ?? internalIsListening;
+  const {
+    transcript,
+    listening,
+    resetTranscript,
+    browserSupportsSpeechRecognition
+  } = useSpeechRecognition();
 
   useEffect(() => {
+    console.log('[VoiceNavigation] Component mounted');
+    setIsBrowser(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isBrowser) return;
+
     if (controlledIsListening !== undefined) {
-      if (controlledIsListening) {
-        handleStartListening();
-      } else {
-        handleStopListening();
+      try {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+          const recognition = new SpeechRecognition();
+          recognition.continuous = true;
+          
+          if (controlledIsListening) {
+            recognition.start();
+          } else {
+            recognition.stop();
+            resetTranscript();
+          }
+        }
+      } catch (error) {
+        console.error('[VoiceNavigation] Speech recognition error:', error);
       }
     }
-  }, [controlledIsListening]);
+  }, [controlledIsListening, isBrowser, resetTranscript]);
 
-  const handleStartListening = async () => {
-    try {
-      // Request microphone permission
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(track => track.stop()); // Stop the stream after getting permission
+  useEffect(() => {
+    if (transcript) {
+      onTranscriptChange?.(transcript);
+      processVoiceCommand(transcript.toLowerCase());
+    }
+  }, [transcript]);
 
-      const recognitionInstance = await initializeRecognition();
-      if (recognitionInstance) {
-        recognitionInstance.start();
+  useEffect(() => {
+    setIsListening(listening);
+  }, [listening]);
+
+  // Expose processVoiceCommand to the parent component
+  useEffect(() => {
+    if (dataVoiceNavigation) {
+      (window as any).processVoiceCommand = processVoiceCommand;
+    }
+    return () => {
+      if (dataVoiceNavigation) {
+        delete (window as any).processVoiceCommand;
       }
-    } catch (err) {
-      console.error('Error accessing microphone:', err);
-      setError('Microphone access denied. Please allow microphone access to use voice commands.');
-    }
-  };
-
-  const handleStopListening = () => {
-    if (recognition.current) {
-      recognition.current.stop();
-    }
-  };
-
-  // Store recognition instance in ref to access it across renders
-  const recognition = useRef<SpeechRecognition | null>(null);
-
-  const initializeRecognition = async () => {
-    try {
-      // Check if the browser supports speech recognition
-      if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
-        setError('Speech recognition is not supported in your browser');
-        return null;
-      }
-
-      // Create speech recognition instance
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognition.current = new SpeechRecognition();
-
-      // Configure recognition settings
-      recognition.current.continuous = false;
-      recognition.current.interimResults = false;
-      recognition.current.lang = 'en-US';
-
-      recognition.current.onstart = () => {
-        setInternalIsListening(true);
-        setError(null);
-      };
-
-      recognition.current.onend = () => {
-        setInternalIsListening(false);
-      };
-
-      recognition.current.onerror = (event: SpeechRecognitionEvent) => {
-        console.error('Speech recognition error:', event.error);
-        setError(`Error: ${event.error}`);
-        setInternalIsListening(false);
-      };
-
-      recognition.current.onresult = (event: SpeechRecognitionEvent) => {
-        const newTranscript = Array.from(event.results)
-          .map((result) => result[0])
-          .map((result) => result.transcript)
-          .join('');
-        
-        setTranscript(newTranscript);
-        onTranscriptChange?.(newTranscript);
-        processVoiceCommand(newTranscript.toLowerCase());
-      };
-
-      return recognition.current;
-    } catch (err) {
-      console.error('Error initializing speech recognition:', err);
-      setError('Failed to initialize speech recognition');
-      return null;
-    }
-  };
+    };
+  }, [dataVoiceNavigation]);
 
   const processVoiceCommand = (command: string) => {
     // Normalize the command by removing extra spaces and converting to lowercase
     const normalizedCommand = command.trim().toLowerCase();
+    
+    console.log('Processing voice command:', normalizedCommand);
+    console.log('Current member:', currentMember);
+    console.log('Team members:', teamMembers);
 
-    // Check for navigation commands with more flexible patterns
+    // Check for action item commands first
+    const actionItemPatterns = [
+      // Simple patterns first
+      /^action item (.+)$/i,
+      /^task (.+)$/i,
+      // More detailed patterns
+      /^add action item (.+?)(?: with description (.+?))?(?: due (?:on )?(.+?))?(?: priority (.+?))?(?: for (.+?))?$/i,
+      /^create action item (.+?)(?: with description (.+?))?(?: due (?:on )?(.+?))?(?: priority (.+?))?(?: for (.+?))?$/i,
+      /^new action item (.+?)(?: with description (.+?))?(?: due (?:on )?(.+?))?(?: priority (.+?))?(?: for (.+?))?$/i,
+      /^add task (.+?)(?: with description (.+?))?(?: due (?:on )?(.+?))?(?: priority (.+?))?(?: for (.+?))?$/i,
+      /^create task (.+?)(?: with description (.+?))?(?: due (?:on )?(.+?))?(?: priority (.+?))?(?: for (.+?))?$/i,
+      /^new task (.+?)(?: with description (.+?))?(?: due (?:on )?(.+?))?(?: priority (.+?))?(?: for (.+?))?$/i
+    ];
+
+    // Try each action item pattern
+    for (const pattern of actionItemPatterns) {
+      const match = normalizedCommand.match(pattern);
+      if (match && onAddActionItem) {
+        let title, description, dueDate, priority, memberName;
+        
+        // Handle simpler patterns
+        if (pattern.toString().includes('^action item (.+)$') || pattern.toString().includes('^task (.+)$')) {
+          title = match[1];
+          // Use defaults for other fields
+          description = title;
+          dueDate = 'today';
+          priority = 'medium';
+          memberName = match[1];
+        } else {
+          const [, matchedTitle, matchedDescription, matchedDueDate, matchedPriority, matchedMemberName] = match;
+          title = matchedTitle;
+          description = matchedDescription;
+          dueDate = matchedDueDate;
+          priority = matchedPriority;
+          memberName = matchedMemberName;
+        }
+        
+        console.log('Action item command detected:', {
+          title,
+          description,
+          dueDate,
+          priority,
+          memberName
+        });
+        
+        // If we're on a member's page and no member name was specified, use the current member
+        let targetMember = currentMember;
+        console.log('Initial target member (from currentMember):', targetMember);
+        
+        // If a member name was specified, find the best match
+        if (memberName) {
+          console.log('Member name specified in command:', memberName);
+          targetMember = findBestNameMatch(memberName.trim(), teamMembers);
+          console.log('Found matching member from command:', targetMember);
+        }
+        
+        if (targetMember) {
+          console.log('Using target member:', targetMember);
+          // Parse due date if provided
+          let parsedDueDate = new Date();
+          if (dueDate) {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            switch(dueDate.toLowerCase()) {
+              case 'today':
+                parsedDueDate = today;
+                break;
+              case 'tomorrow':
+                parsedDueDate = tomorrow;
+                break;
+              default:
+                // Try to parse the date string
+                const date = new Date(dueDate);
+                if (!isNaN(date.getTime())) {
+                  parsedDueDate = date;
+                }
+            }
+          }
+
+          // Normalize priority if provided
+          let normalizedPriority = 'medium';
+          if (priority) {
+            const priorityLower = priority.toLowerCase();
+            if (['high', 'urgent', 'important'].includes(priorityLower)) {
+              normalizedPriority = 'high';
+            } else if (['low', 'minor', 'not important'].includes(priorityLower)) {
+              normalizedPriority = 'low';
+            }
+          }
+
+          const actionItemData: ActionItemData = {
+            title,
+            description: description || title,
+            due_date: dueDate || new Date().toISOString().split('T')[0],
+            priority: (priority || 'medium') as 'low' | 'medium' | 'high'
+          };
+          console.log('Creating action item with data:', actionItemData);
+          
+          onAddActionItem(targetMember.id, actionItemData);
+          resetTranscript();
+          onActionItemCreated?.();
+          return;
+        } else {
+          console.log('No target member found for action item');
+        }
+      }
+    }
+
+    // Check for navigation commands only if no action item was matched
     const navigationPatterns = [
-      /go to (?:page )?(.+)/i,
-      /navigate to (?:page )?(.+)/i,
-      /show (?:page )?(.+)/i,
-      /open (?:page )?(.+)/i,
-      /view (?:page )?(.+)/i
+      /^go to (?:page )?(.+)/i,
+      /^navigate to (?:page )?(.+)/i,
+      /^show (?:page )?(.+)/i,
+      /^open (?:page )?(.+)/i,
+      /^view (?:page )?(.+)/i
     ];
 
     // Try each navigation pattern
@@ -183,59 +276,14 @@ export default function VoiceNavigation({
       const match = normalizedCommand.match(pattern);
       if (match) {
         const nameToFind = match[1].trim();
+        console.log('Navigation command detected, looking for member:', nameToFind);
         
         // Find the best matching team member
         const bestMatch = findBestNameMatch(nameToFind, teamMembers);
         if (bestMatch) {
+          console.log('Found matching member for navigation:', bestMatch);
           router.push(`/members/${bestMatch.id}`);
-          return;
-        }
-      }
-    }
-
-    // Check for action item commands with more flexible patterns
-    const actionItemPatterns = [
-      /add action item (.+?)(?: for (.+))?/i,
-      /create action item (.+?)(?: for (.+))?/i,
-      /new action item (.+?)(?: for (.+))?/i,
-      /add task (.+?)(?: for (.+))?/i,
-      /create task (.+?)(?: for (.+))?/i,
-      /new task (.+?)(?: for (.+))?/i,
-      /add objective (.+?)(?: for (.+))?/i,
-      /create objective (.+?)(?: for (.+))?/i,
-      /new objective (.+?)(?: for (.+))?/i,
-      /add project (.+?)(?: for (.+))?/i,
-      /create project (.+?)(?: for (.+))?/i,
-      /new project (.+?)(?: for (.+))?/i,
-      /add milestone (.+?)(?: for (.+))?/i,
-      /create milestone (.+?)(?: for (.+))?/i,
-      /new milestone (.+?)(?: for (.+))?/i
-    ];
-
-    // Try each action item pattern
-    for (const pattern of actionItemPatterns) {
-      const match = normalizedCommand.match(pattern);
-      if (match && onAddActionItem) {
-        const [_, content, memberName] = match;
-        
-        // If we're on a member's page and no member name was specified, use the current member
-        let targetMember = currentMember;
-        
-        // If a member name was specified, find the best match
-        if (memberName) {
-          targetMember = findBestNameMatch(memberName.trim(), teamMembers);
-        }
-        
-        if (targetMember) {
-          onAddActionItem(targetMember.id, content.trim());
-          return;
-        } else if (memberName) {
-          // If a member name was specified but no match was found
-          setError(`Could not find team member: ${memberName}`);
-          return;
-        } else {
-          // If no member name was specified and we're not on a member's page
-          setError('Please specify a team member or navigate to their page first');
+          resetTranscript();
           return;
         }
       }
@@ -272,13 +320,76 @@ export default function VoiceNavigation({
     });
   };
 
-  useEffect(() => {
-    return () => {
-      if (recognition.current) {
-        recognition.current.stop();
-      }
-    };
-  }, []);
+  const handleSubmit = () => {
+    const command = manualInput || transcript;
+    if (command.trim()) {
+      console.log('[VoiceNavigation] Command submitted:', command);
+      onCommand(command);
+      setManualInput('');
+      resetTranscript();
+    }
+  };
 
-  return null; // Component is now headless, UI handled by parent
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  if (!isBrowser) {
+    console.log('[VoiceNavigation] Not in browser environment, returning null');
+    return null;
+  }
+
+  if (!browserSupportsSpeechRecognition) {
+    return (
+      <div className="voice-navigation">
+        <div className="error-message">
+          Your browser doesn't support speech recognition.
+        </div>
+        <div className="manual-input">
+          <textarea
+            value={manualInput}
+            onChange={(e) => setManualInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Type your command here..."
+            rows={3}
+          />
+          <button onClick={handleSubmit}>Submit</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="voice-navigation">
+      <div className="manual-input">
+        <textarea
+          value={manualInput}
+          onChange={(e) => setManualInput(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder="Type your command here..."
+          rows={3}
+        />
+      </div>
+      <div className="controls">
+        <button
+          onClick={() => {
+            if (isListening) {
+              SpeechRecognition.stopListening();
+              console.log('[VoiceNavigation] Stopping speech recognition');
+            } else {
+              SpeechRecognition.startListening({ continuous: true });
+              console.log('[VoiceNavigation] Starting speech recognition');
+            }
+          }}
+          className={isListening ? 'listening' : ''}
+        >
+          {isListening ? 'Stop Listening' : 'Start Listening'}
+        </button>
+        <button onClick={handleSubmit}>Submit</button>
+      </div>
+    </div>
+  );
 } 

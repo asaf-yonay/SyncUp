@@ -123,4 +123,28 @@
   --max-width-5xl: 2304px;
   --max-width-6xl: 2560px;
   --max-width-7xl: 2816px;
+
+  /* Voice Navigation */
+  --voice-nav-z-index: 9999;
+  --voice-nav-position-bottom: 1rem;
+  --voice-nav-position-right: 1rem;
+  --voice-nav-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --voice-nav-transition: all 0.3s ease;
+  --voice-nav-size-collapsed: 3rem;
+  --voice-nav-size-expanded-width: 24rem;
+  --voice-nav-size-expanded-height: 12rem;
+  --voice-nav-button-height: 3rem;
+  --voice-nav-icon-size: 1.5rem;
+  --voice-nav-padding: 1rem;
+  --voice-nav-border-radius: var(--radius-lg);
+  --voice-nav-background: var(--color-white);
+  --voice-nav-button-background: var(--color-gray-100);
+  --voice-nav-button-hover: var(--color-gray-200);
+  --voice-nav-button-active: var(--color-blue-500);
+  --voice-nav-icon-color: var(--color-gray-600);
+  --voice-nav-icon-active: var(--color-white);
+  --voice-nav-text-color: var(--color-gray-500);
+  --voice-nav-text-size: var(--font-size-sm);
+  --voice-nav-error-background: var(--color-red-100);
+  --voice-nav-error-text: var(--color-red-700);
 } 

@@ -7,11 +7,18 @@ interface ActionItemFormProps {
   onClose: () => void;
 }
 
+interface ActionItemData {
+  title: string;
+  description?: string;
+  due_date?: string;
+  priority?: 'low' | 'medium' | 'high';
+}
+
 export function ActionItemForm({ memberId, onClose }: ActionItemFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [due_date, setDueDate] = useState('');
-  const [priority, setPriority] = useState('medium');
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,16 +28,20 @@ export function ActionItemForm({ memberId, onClose }: ActionItemFormProps) {
     setError(null);
 
     try {
+      const actionItemData: ActionItemData = {
+        title,
+        description: description || title, // Use title as description if none provided
+        due_date: due_date || new Date().toISOString().split('T')[0], // Use today if no date provided
+        priority
+      };
+
       const response = await fetch('/api/action-items', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          title,
-          description,
-          due_date,
-          priority,
+          ...actionItemData,
           member_id: memberId,
         }),
       });
@@ -116,7 +127,7 @@ export function ActionItemForm({ memberId, onClose }: ActionItemFormProps) {
               fontSize: 'var(--font-size-sm)',
               fontWeight: 'var(--font-weight-medium)'
             }}>
-              Title
+              Title *
             </label>
             <input
               type="text"
@@ -146,7 +157,6 @@ export function ActionItemForm({ memberId, onClose }: ActionItemFormProps) {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              required
               style={{
                 width: '100%',
                 padding: 'var(--spacing-2) var(--spacing-3)',
@@ -172,7 +182,6 @@ export function ActionItemForm({ memberId, onClose }: ActionItemFormProps) {
               type="date"
               value={due_date}
               onChange={(e) => setDueDate(e.target.value)}
-              required
               style={{
                 width: '100%',
                 padding: 'var(--spacing-2) var(--spacing-3)',
@@ -195,7 +204,7 @@ export function ActionItemForm({ memberId, onClose }: ActionItemFormProps) {
             </label>
             <select
               value={priority}
-              onChange={(e) => setPriority(e.target.value)}
+              onChange={(e) => setPriority(e.target.value as 'low' | 'medium' | 'high')}
               style={{
                 width: '100%',
                 padding: 'var(--spacing-2) var(--spacing-3)',
